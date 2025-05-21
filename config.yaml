@@ -1,7 +1,7 @@
-name: "GMC 3xx Radiation Monitor"
-description: "Radiation Monitor Sensor Interface"
+name: "GMC-300S Monitor"
+description: "Interface for reading data from a GMC-300S radiation monitor"
 version: "1.0.0"
-slug: "gmc3xx_monitor"
+slug: "gmc300s"
 arch:
   - aarch64
   - amd64
@@ -10,8 +10,8 @@ arch:
   - i386
 options:
   port: "/dev/ttyUSB0"
-  baudrate: 115200
-  repeat: "60"
+  baudrate: 57600
+  repeat: "30"
 schema:
   port: str
   baudrate: int

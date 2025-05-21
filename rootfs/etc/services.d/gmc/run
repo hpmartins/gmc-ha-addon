@@ -1,0 +1,36 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Start gmc service
+# ==============================================================================
+
+PORT="$(bashio::config 'port')"
+BAUDRATE="$(bashio::config 'baudrate')"
+DELAY="$(bashio::config 'repeat')"
+
+set +e
+
+bashio::log.info "Starting gmc, using port ${PORT} and baudrate ${BAUDRATE}"
+
+# Get the device serial number
+RESPONSE=$(gmc ${PORT} --serial --baudrate ${BAUDRATE})
+bashio::log.info "response: ${RESPONSE}"
+SERIAL=$(echo "${RESPONSE}" | jq -r .attributes.serial)
+bashio::log.info "Device serial number: ${SERIAL}"
+
+
+# Send the readings to http://supervisor/core/api
+bashio::log.info "Start sending data"
+while true; do
+    bashio::log.info "Requesting data, using port ${PORT} and baudrate ${BAUDRATE}"
+    DATA=$(gmc ${PORT} --baudrate ${BAUDRATE})
+    bashio::log.info "response: ${DATA}"
+    HTTP_CODE=$(curl -s -X POST -o response.txt -w "%{http_code}" \
+        -H "Authorization: Bearer ${SUPERVISOR_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "${DATA}" \
+        "http://supervisor/core/api/states/sensor.gmc_${SERIAL}")
+    HTTP_RESPONSE=$(cat response.txt)
+    bashio::log.info "HA API HTTP code: ${HTTP_CODE}"
+    bashio::log.info "HA API HTTP Response: ${HTTP_RESPONSE}"
+    sleep ${DELAY}
+done
